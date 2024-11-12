@@ -32,7 +32,11 @@
                         <center><strong><p>RSU AISYIYAH PURWOREJO</p></strong></center>
                         <center><strong><p>NERACA</p></strong></center>
                         <center><strong><p class="text-muted">{{ \Carbon\Carbon::parse(request('start_date'))->translatedFormat('F Y') }}</p></strong></center>
+
+                        <!-- Menampilkan Saldo Awal di Atas Tabel -->
+
                         @foreach ($balances as $balance)
+                            <h5 class="text-right font-weight-bold">Saldo Awal: {{ number_format($initial_balance, 2) }}</h5>
                             <h4 class="mt-4">{{ $balance['klasifikasi'] }}</h4>
                             <table class="table table-borderless">
                                 <thead>
@@ -64,6 +68,7 @@
                                     </tr>
                                 </tbody>
                             </table>
+                            <h5 class="text-right font-weight-bold mt-4">Saldo Akhir: {{ number_format($final_balance, 2) }}</h5>
                         @endforeach
                     </div>
                 </div>
@@ -73,7 +78,6 @@
 </div>
 
 <style>
-    /* CSS untuk tampilan akar pohon */
     h4 {
         font-size: 1.5em;
         font-weight: bold;
@@ -86,11 +90,9 @@
     table tbody tr td:first-child {
         font-family: 'Courier New', Courier, monospace;
     }
-    /* Indentasi bertingkat untuk sub-klasifikasi */
     table tbody tr td {
         padding: 8px 0;
     }
-    /* Atur padding untuk elemen sesuai level hirarki */
     table tbody tr td.level-1 {
         padding-left: 20px;
     }

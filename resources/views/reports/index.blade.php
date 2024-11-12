@@ -4,27 +4,27 @@
 <div class="main-content">
     <section class="section">
         <div class="section-header">
-            <h1>Laporan Laba Rugi</h1>
+            <h1>Profit Loss</h1>
         </div>
 
         <div class="section-body">
             <div class="card">
                 <div class="card-header">
-                    <h4><i class="fas fa-balance-scale"></i> Laporan Laba Rugi</h4>
+                    <h4><i class="fas fa-balance-scale"></i> Profit Loss</h4>
                 </div>
 
                 <div class="card-body">
                     <!-- Form Filter Tanggal -->
                     <form action="{{ route('reports.index') }}" method="GET" class="form-inline mb-4">
                         <div class="form-group mr-2">
-                            <label for="start_date" class="mr-2">Tanggal Mulai:</label>
+                            <label for="start_date" class="mr-2">Start date:</label>
                             <input type="date" id="start_date" name="start_date" class="form-control" value="{{ request('start_date') }}">
                         </div>
                         <div class="form-group mr-2">
-                            <label for="end_date" class="mr-2">Tanggal Akhir:</label>
+                            <label for="end_date" class="mr-2">End date:</label>
                             <input type="date" id="end_date" name="end_date" class="form-control" value="{{ request('end_date') }}">
                         </div>
-                        <button type="submit" class="btn btn-primary">Tampilkan</button>
+                        <button type="submit" class="btn btn-primary">Show</button>
                     </form>
 
                     <!-- Tabel Laba Rugi -->

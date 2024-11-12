@@ -17,26 +17,43 @@ class NeracaController extends Controller
         // Ambil akun-akun dengan jurnal entri dan filter berdasarkan transaction_date di tabel journals
         $accounts = Account::with(['journal_entries' => function ($query) use ($startDate, $endDate) {
             if ($startDate && $endDate) {
-                $query->whereHas('journals', function ($query) use ($startDate, $endDate) {
+                $query->whereHas('journal', function ($query) use ($startDate, $endDate) {
                     $query->whereBetween('transaction_date', [$startDate, $endDate]);
                 });
             }
         }])->get()->groupBy('klasifikasi');
 
         // Hitung total saldo setiap subKlasifikasi dan klasifikasi
-        $balances = $accounts->map(function ($accountsByKlasifikasi, $klasifikasi) {
+        $balances = $accounts->map(function ($accountsByKlasifikasi, $klasifikasi) use ($startDate) {
             $klasifikasiTotalDebit = 0;
             $klasifikasiTotalCredit = 0;
 
-            $subKlasifikasiData = $accountsByKlasifikasi->groupBy('subKlasifikasi')->map(function ($group, $subKlasifikasi) use (&$klasifikasiTotalDebit, &$klasifikasiTotalCredit) {
+            $subKlasifikasiData = $accountsByKlasifikasi->groupBy('subKlasifikasi')->map(function ($group, $subKlasifikasi) use (&$klasifikasiTotalDebit, &$klasifikasiTotalCredit, $startDate) {
                 $totalDebit = 0;
                 $totalCredit = 0;
 
                 // Hitung saldo untuk masing-masing akun dalam subKlasifikasi
-                $accountData = $group->map(function ($account) use (&$totalDebit, &$totalCredit) {
+                $accountData = $group->map(function ($account) use (&$totalDebit, &$totalCredit, $startDate) {
+                    // Hitung debit dan kredit dalam periode yang dipilih
                     $debit = $account->journal_entries->sum('debit');
                     $credit = $account->journal_entries->sum('credit');
                     $balance = $debit - $credit;
+
+                    // Hitung saldo awal sebelum tanggal mulai periode
+                    $initialDebit = $account->journal_entries()
+                        ->whereHas('journal', function ($query) use ($startDate) {
+                            $query->whereDate('transaction_date', '<', $startDate);
+                        })->sum('debit');
+
+                    $initialCredit = $account->journal_entries()
+                        ->whereHas('journal', function ($query) use ($startDate) {
+                            $query->whereDate('transaction_date', '<', $startDate);
+                        })->sum('credit');
+
+                    $initialBalance = $initialDebit - $initialCredit;
+
+                    // Saldo akhir (saldo awal + saldo berjalan selama periode)
+                    $finalBalance = $initialBalance + $balance;
 
                     // Tambahkan ke total subKlasifikasi
                     $totalDebit += $debit;
@@ -45,9 +62,11 @@ class NeracaController extends Controller
                     return [
                         'account_number' => $account->account_number,
                         'account_name' => $account->name,
+                        'initial_balance' => $initialBalance,
                         'debit' => $debit,
                         'credit' => $credit,
                         'balance' => $balance,
+                        'final_balance' => $finalBalance,
                     ];
                 });
 
@@ -72,6 +91,12 @@ class NeracaController extends Controller
                 'totalBalance' => $klasifikasiTotalDebit - $klasifikasiTotalCredit,
             ];
         });
+        // // Hitung saldo awal dan saldo akhir total
+        // $initial_balance = Account::whereHas('journal_entries.journals', function ($query) use ($startDate) {
+        //     $query->whereDate('transaction_date', '<', $startDate);
+        // })->sum('balance');
+
+        // $final_balance = $initial_balance + $balances->sum('totalBalance');
 
         return view('neracas.index', compact('balances'));
     }
